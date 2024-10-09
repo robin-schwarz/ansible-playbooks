@@ -4,15 +4,15 @@
   gather_facts: yes
   tasks:
     - name: Gather CPU usage
-      command: "top -bn1 | grep 'Cpu(s)' | awk '{print $2}'"
+      shell: "top -bn1 | grep 'Cpu(s)' | awk '{print $2}'"
       register: cpu_usage
 
     - name: Gather RAM Usage
-      command: free | awk '/Mem/ {printf "%.2f\n", $3/$2 * 100}'
+      shell: "free | awk '/Mem/ {printf \"%.2f\\n\", $3/$2 * 100}'"
       register: ram_usage
 
     - name: Gather Disk Space
-      command: df -h --output=pcent / | awk 'NR==2 {print $1}'
+      shell: "df -h --output=pcent / | awk 'NR==2 {print $1}'"
       register: disk_space
 
     - name: Usage Stats
