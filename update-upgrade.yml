@@ -1,0 +1,14 @@
+---
+- name: Update and upgrade apt packages
+  hosts: all
+  become: yes  # Benötigt, um Befehle mit sudo auszuführen
+  tasks:
+    - name: Update apt package list
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all apt packages
+      apt:
+        upgrade: dist  # Führe vollständiges dist-upgrade aus
+        autoremove: yes  # Entferne unnötige Pakete
+        autoclean: yes  # Bereinige den apt-cache
