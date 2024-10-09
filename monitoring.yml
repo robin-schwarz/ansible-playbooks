@@ -3,6 +3,12 @@
   hosts: all
   gather_facts: yes
   tasks:
+    - name: Install sysstat
+      apt:
+        name: sysstat
+        state: present
+      become: true  # Verwende 'become', um Root-Rechte zu erhalten
+
     - name: Gather CPU usage
       command: mpstat 1 1 | awk '/Average/ {print 100 - $12}'
       register: cpu_usage
