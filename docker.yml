@@ -1,0 +1,44 @@
+---
+- name: Install Docker on Debian 12
+  hosts: all  # Wähle die entsprechenden Hosts oder Gruppen aus
+  become: yes  # Um die Aufgaben mit sudo-Rechten auszuführen
+  tasks:
+    - name: Update apt package index
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Add Docker GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/debian bookworm stable"
+        state: present
+
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: docker-ce
+        state: present
+
+    - name: Ensure Docker service is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add user to the Docker group
+      ansible.builtin.user:
+        name: "{{ ansible_ssh_user }}"  # Der aktuelle SSH-Benutzer
+        group: docker
+        append: yes
