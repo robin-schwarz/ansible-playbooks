@@ -7,14 +7,11 @@
         api_user: "{{ proxmox_api_user }}"
         api_password: "{{ proxmox_api_password }}"
         api_host: "{{ proxmox_api_host }}"
-        api_port: 8006
-        vmid: 104  # ID for the new VM
+        vmid: 104
         node: "{{ proxmox_vm_node }}"
         name: 'ubuntu-new'
         cores: 2
         memory: 4096
-        disks:
-          - size: 32
-            storage: local-lvm  # Storage pool for the disk
-            template: 'ubuntu'
+        scsi: 0,32,local-lvm  # Datenträger auf local-lvm
+        template: 'ubuntu'
         state: present
