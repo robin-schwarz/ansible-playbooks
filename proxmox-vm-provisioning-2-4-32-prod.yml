@@ -13,5 +13,8 @@
         clone: 'ubuntu-template'
         cores: 2
         memory: 4096
-        scsi: "local-lvm:32"  # Hier wird der Datenträger konfiguriert
-        state: present
+        disks:
+          - size: 32
+            storage: local-lvm # Storage pool for the disk
+            template: 'ubuntu'
+            state: present
