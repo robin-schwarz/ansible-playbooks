@@ -1,7 +1,7 @@
 ---
 hosts: proxmox
-gather_facts: yes
 - name: Create a Proxmox VM
+  gather_facts: yes
   proxmox_kvm:
   api_user: "{{ proxmox_api_user }}"
   api_password: "{{ proxmox_api_password }}"
