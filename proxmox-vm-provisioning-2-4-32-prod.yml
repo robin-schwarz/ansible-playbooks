@@ -13,8 +13,3 @@
         clone: 'ubuntu-template'
         cores: 2
         memory: 4096
-        disks:
-          - size: 32
-            storage: local-lvm # Storage pool for the disk
-            template: 'ubuntu'
-            state: present
