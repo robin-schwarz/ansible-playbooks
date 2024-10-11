@@ -11,5 +11,4 @@
         node: "{{ proxmox_vm_node }}"
         name: 'ubuntu-new'
         clone: 'ubuntu-template'
-        cores: 2
-        memory: 4096
+        timeout: 600
