@@ -2,7 +2,7 @@
 - hosts: proxmox
   gather_facts: yes
   tasks:
-    - name: Create a Proxmox VM
+    - name: Create a Proxmox VM from template
       proxmox_kvm:
         api_user: "{{ proxmox_api_user }}"
         api_password: "{{ proxmox_api_password }}"
@@ -10,8 +10,8 @@
         vmid: 104
         node: "{{ proxmox_vm_node }}"
         name: 'ubuntu-new'
+        clone: 'ubuntu-template'  # Klone die VM vom Template
         cores: 2
         memory: 4096
-        scsi0: "local-lvm:32"  # Speicher als key=value
-        template: 'ubuntu'
+        scsi0: "local-lvm:32"
         state: present
