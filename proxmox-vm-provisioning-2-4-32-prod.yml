@@ -1,29 +1,19 @@
 ---
-- name: Create a Proxmox VM
-  hosts: proxmox
-  gather_facts: yes
-  vars:
-  proxmox_api_port: '8006'
-  proxmox_vm_name: 'ubuntu-new'
-  proxmox_vm_template: 'ubuntu'
-  proxmox_vm_node: 'test-robin'
-  proxmox_vm_cores: 2
-  proxmox_vm_memory: 4096
-  proxmox_vm_disk_size: 32G
-
+hosts: proxmox
+gather_facts: yes
 - name: Create a Proxmox VM
   proxmox_kvm:
   api_user: "{{ proxmox_api_user }}"
   api_password: "{{ proxmox_api_password }}"
   api_host: "{{ proxmox_api_host }}"
-  api_port: "{{ proxmox_api_port }}"
+  api_port: 8006
   vmid: 104 # ID for the new VM
   node: "{{ proxmox_vm_node }}"
-  name: "{{ proxmox_vm_name }}"
-  cores: "{{ proxmox_vm_cores }}"
-  memory: "{{ proxmox_vm_memory }}"
+  name: 'ubuntu-new'
+  cores: 2
+  memory: 4096
   disks:
-    - size: "{{ proxmox_vm_disk_size }}"
+    - size: 32
       storage: local-lvm # Storage pool for the disk
-      template: "{{ proxmox_vm_template }}"
+      template: 'ubuntu'
       state: present
