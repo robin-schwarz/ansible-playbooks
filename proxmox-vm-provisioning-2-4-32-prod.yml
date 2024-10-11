@@ -7,7 +7,7 @@
         api_user: "{{ proxmox_api_user }}"
         api_password: "{{ proxmox_api_password }}"
         api_host: "{{ proxmox_api_host }}"
-        vmid: 103
+        vmid: 104
         node: "{{ proxmox_vm_node }}"
         name: 'ubuntu-new'
         clone: 'ubuntu-template'
