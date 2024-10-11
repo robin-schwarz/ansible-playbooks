@@ -12,6 +12,6 @@
         name: 'ubuntu-new'
         cores: 2
         memory: 4096
-        scsi: 0,32,local-lvm  # Datenträger auf local-lvm
+        scsi0: "local-lvm:32"  # Speicher als key=value
         template: 'ubuntu'
         state: present
