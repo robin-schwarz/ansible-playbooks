@@ -10,8 +10,8 @@
         vmid: 104
         node: "{{ proxmox_vm_node }}"
         name: 'ubuntu-new'
-        clone: 'ubuntu-template'  # Klone die VM vom Template
+        clone: 'ubuntu-template'
         cores: 2
         memory: 4096
-        scsi0: "local-lvm:32"
+        scsi: "local-lvm:32"  # Hier wird der Datenträger konfiguriert
         state: present
