@@ -1,0 +1,30 @@
+---
+- name: List All Confluence Spaces
+  hosts: confluence_servers
+  gather_facts: false
+  vars:
+    confluence_base_url: "{{ lookup('env', 'confluence_base_url') }}"
+    confluence_api_token: "{{ lookup('env', 'confluence_api_token') }}"
+    confluence_email: "{{ lookup('env', 'confluence_email') }}"
+
+  tasks:
+    - name: Get list of all Confluence spaces
+      uri:
+        url: "{{ confluence_base_url }}/wiki/rest/api/space?expand=description.plain,metadata&limit=1000"
+        method: GET
+        user: "{{ confluence_email }}"
+        password: "{{ confluence_api_token }}"
+        force_basic_auth: yes
+        return_content: yes
+      register: spaces_response
+
+    - name: Display spaces information
+      debug:
+        msg: |
+          Verfügbare Spaces:
+          {% for space in spaces_response.json.results %}
+          - Space Name: {{ space.name }}
+            Space-Schlüssel: {{ space.key }}
+            Typ: {{ space.type }}
+            Status: {{ space.status }}
+          {% endfor %}
