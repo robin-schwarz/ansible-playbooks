@@ -3,10 +3,10 @@
   hosts: confluence_servers  # Zielserver im inventory definieren
   gather_facts: false
   vars:
-    confluence_base_url: "https://your-instance.atlassian.net"
+    confluence_base_url: {confluence_base_url}
     confluence_api_token: {confluence_api_token}
-    confluence_email: "your-email"
-    backup_dir: "/path/to/backups"
+    confluence_email: {confluence_email}
+    backup_dir: "/home/admin/semaphore"
     include_attachments: false
     max_retries: 150  # 3000 Sekunden / 20 Sekunden = 150 Versuche
     wait_seconds: 20
