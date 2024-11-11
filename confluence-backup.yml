@@ -4,7 +4,7 @@
   gather_facts: false
   vars:
     confluence_base_url: "https://your-instance.atlassian.net"
-    confluence_api_token: "your-api-token"
+    confluence_api_token: {confluence_api_token}
     confluence_email: "your-email"
     backup_dir: "/path/to/backups"
     include_attachments: false
