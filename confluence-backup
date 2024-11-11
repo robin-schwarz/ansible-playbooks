@@ -1,0 +1,88 @@
+---
+- name: Confluence Backup Automation
+  hosts: confluence_servers  # Zielserver im inventory definieren
+  gather_facts: false
+  vars:
+    confluence_base_url: "https://your-instance.atlassian.net"
+    confluence_api_token: "your-api-token"
+    confluence_email: "your-email"
+    backup_dir: "/path/to/backups"
+    include_attachments: false
+    max_retries: 150  # 3000 Sekunden / 20 Sekunden = 150 Versuche
+    wait_seconds: 20
+    timezone: "Europe/Amsterdam"
+
+  vars_files:
+    - vars/confluence_secrets.yml  # secrets
+
+  tasks:
+    - name: Ensure backup directory exists
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Get current date
+      command: date +%d-%m-%Y
+      environment:
+        TZ: "{{ timezone }}"
+      register: current_date
+      changed_when: false
+
+    - name: Start Confluence backup
+      uri:
+        url: "{{ confluence_base_url }}/wiki/rest/obm/1.0/runbackup"
+        method: POST
+        user: "{{ confluence_email }}"
+        password: "{{ confluence_api_token }}"
+        force_basic_auth: yes
+        body_format: json
+        body:
+          cbAttachments: "{{ include_attachments }}"
+        headers:
+          X-Atlassian-Token: "no-check"
+          X-Requested-With: "XMLHttpRequest"
+          Content-Type: "application/json"
+        status_code: 200
+      register: backup_response
+
+    - name: Check backup progress
+      uri:
+        url: "{{ confluence_base_url }}/wiki/rest/obm/1.0/getprogress.json"
+        method: GET
+        user: "{{ confluence_email }}"
+        password: "{{ confluence_api_token }}"
+        force_basic_auth: yes
+        return_content: yes
+      register: progress_response
+      until: progress_response.content | regex_search('"fileName"[ ]*:[ ]*"([^"]*)"') or progress_response.content is search('error')
+      retries: "{{ max_retries }}"
+      delay: "{{ wait_seconds }}"
+
+    - name: Extract filename from progress response
+      set_fact:
+        backup_filename: "{{ progress_response.content | regex_search('\"fileName\"\\s*:\\s*\"([^\"]+)\"', '\\1') | first }}"
+      when: progress_response.content is search('fileName')
+
+    - name: Download backup file
+      get_url:
+        url: "{{ confluence_base_url }}/wiki/download/{{ backup_filename }}"
+        dest: "{{ backup_dir }}/CONF-backup-{{ current_date.stdout }}.zip"
+        url_username: "{{ confluence_email }}"
+        url_password: "{{ confluence_api_token }}"
+        force_basic_auth: yes
+      when: backup_filename is defined
+
+    - name: Cleanup old backups (keep last 7 days)
+      find:
+        paths: "{{ backup_dir }}"
+        patterns: "CONF-backup-*.zip"
+        age: 7d
+        recurse: no
+      register: old_backups
+
+    - name: Remove old backup files
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ old_backups.files }}"
