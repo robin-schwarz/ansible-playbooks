@@ -1,17 +1,17 @@
 ---
-- name: Confluence Backup Automation
-  hosts: confluence_servers  # Zielserver im inventory definieren
+- name: Confluence Space Backup Automation
+  hosts: confluence_servers
   gather_facts: false
   vars:
-    confluence_base_url: "{{ confluence_base_url }}"
-    confluence_api_token: "{{ confluence_api_token }}"
-    confluence_email: "{{ confluence_email }}"
+    confluence_base_url: "{{ lookup('env', 'confluence_base_url') }}"
+    confluence_api_token: "{{ lookup('env', 'confluence_api_token') }}"
+    confluence_email: "{{ lookup('env', 'confluence_email') }}"
+    space_key: "YOURSPACEKEY"  # Der Space-Key des zu sichernden Spaces
     backup_dir: "/home/admin/semaphore"
-    include_attachments: false
-    max_retries: 150  # 3000 Sekunden / 20 Sekunden = 150 Versuche
+    include_attachments: true
+    max_retries: 150
     wait_seconds: 20
     timezone: "Europe/Amsterdam"
-
 
   tasks:
     - name: Ensure backup directory exists
@@ -27,54 +27,59 @@
       register: current_date
       changed_when: false
 
-    - name: Start Confluence backup
+    - name: Start Confluence Space Export
       uri:
-        url: "{{ confluence_base_url }}/wiki/rest/obm/1.0/runbackup"
+        url: "{{ confluence_base_url }}/wiki/rest/api/space/{{ space_key }}/export"
         method: POST
         user: "{{ confluence_email }}"
         password: "{{ confluence_api_token }}"
         force_basic_auth: yes
         body_format: json
-        body:
-          cbAttachments: "{{ include_attachments }}"
+        body: |
+          {
+            "exportType": "TYPE_HTML",
+            "exportAttachments": {{ include_attachments | string | lower }},
+            "schemes": ["custom"]
+          }
         headers:
           X-Atlassian-Token: "no-check"
           X-Requested-With: "XMLHttpRequest"
           Content-Type: "application/json"
-        status_code: 200
-      register: backup_response
+        status_code: [202, 200]
+      register: export_response
 
-    - name: Check backup progress
+    - name: Get export task ID
+      set_fact:
+        task_id: "{{ export_response.json.taskId }}"
+      when: export_response.json is defined and export_response.json.taskId is defined
+
+    - name: Check export progress
       uri:
-        url: "{{ confluence_base_url }}/wiki/rest/obm/1.0/getprogress.json"
+        url: "{{ confluence_base_url }}/wiki/rest/api/longtask/{{ task_id }}"
         method: GET
         user: "{{ confluence_email }}"
         password: "{{ confluence_api_token }}"
         force_basic_auth: yes
         return_content: yes
       register: progress_response
-      until: progress_response.content | regex_search('"fileName"[ ]*:[ ]*"([^"]*)"') or progress_response.content is search('error')
+      until: progress_response.json.status == 'COMPLETE' or progress_response.json.status == 'FAILED'
       retries: "{{ max_retries }}"
       delay: "{{ wait_seconds }}"
+      when: task_id is defined
 
-    - name: Extract filename from progress response
-      set_fact:
-        backup_filename: "{{ progress_response.content | regex_search('\"fileName\"\\s*:\\s*\"([^\"]+)\"', '\\1') | first }}"
-      when: progress_response.content is search('fileName')
-
-    - name: Download backup file
+    - name: Download space export
       get_url:
-        url: "{{ confluence_base_url }}/wiki/download/{{ backup_filename }}"
-        dest: "{{ backup_dir }}/CONF-backup-{{ current_date.stdout }}.zip"
+        url: "{{ confluence_base_url }}/wiki/download/exportspaceresult/{{ task_id }}/{{ space_key }}-export.zip"
+        dest: "{{ backup_dir }}/{{ space_key }}-backup-{{ current_date.stdout }}.zip"
         url_username: "{{ confluence_email }}"
         url_password: "{{ confluence_api_token }}"
         force_basic_auth: yes
-      when: backup_filename is defined
+      when: task_id is defined and progress_response.json.status == 'COMPLETE'
 
     - name: Cleanup old backups (keep last 7 days)
       find:
         paths: "{{ backup_dir }}"
-        patterns: "CONF-backup-*.zip"
+        patterns: "{{ space_key }}-backup-*.zip"
         age: 7d
         recurse: no
       register: old_backups
@@ -84,3 +89,8 @@
         path: "{{ item.path }}"
         state: absent
       with_items: "{{ old_backups.files }}"
+
+    - name: Handle export failure
+      fail:
+        msg: "Space export failed: {{ progress_response.json.statusDescription }}"
+      when: task_id is defined and progress_response.json.status == 'FAILED'
