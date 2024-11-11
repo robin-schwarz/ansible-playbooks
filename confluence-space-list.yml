@@ -1,6 +1,7 @@
 ---
 - name: List All Confluence Spaces
   hosts: localhost
+  connection: local
   gather_facts: false
   vars:
     confluence_base_url: "{{ lookup('env', 'confluence_base_url') }}"
@@ -8,13 +9,23 @@
     confluence_email: "{{ lookup('env', 'confluence_email') }}"
 
   tasks:
+    - name: Debug connection information
+      debug:
+        msg: 
+          - "Checking connection to: {{ confluence_base_url }}"
+          - "Using email: {{ confluence_email }}"
+          - "API token length: {{ confluence_api_token | length }}"
+
     - name: Get list of all Confluence spaces
       uri:
-        url: "{{ confluence_base_url }}/wiki/rest/api/space?expand=description.plain,metadata&limit=1000"
+        url: "{{ confluence_base_url }}/wiki/rest/api/space"
         method: GET
         user: "{{ confluence_email }}"
         password: "{{ confluence_api_token }}"
         force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Accept: "application/json"
         return_content: yes
       register: spaces_response
 
@@ -28,3 +39,4 @@
             Typ: {{ space.type }}
             Status: {{ space.status }}
           {% endfor %}
+      when: spaces_response.status == 200
