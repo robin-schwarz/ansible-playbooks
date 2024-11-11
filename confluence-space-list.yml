@@ -1,6 +1,6 @@
 ---
 - name: List All Confluence Spaces
-  hosts: confluence_servers
+  hosts: self
   gather_facts: false
   vars:
     confluence_base_url: "{{ lookup('env', 'confluence_base_url') }}"
