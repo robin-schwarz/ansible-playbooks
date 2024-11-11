@@ -4,7 +4,7 @@
   connection: local
   gather_facts: false
   vars:
-    confluence_base_url: "https://confluence.mpg.de"  # Ohne Slash am Ende
+    confluence_base_url: "https://confluence.mpg.de"  # Ohne Slash am Ende!
     confluence_email: "{{ lookup('env', 'confluence_email') }}"
     confluence_api_token: "{{ lookup('env', 'confluence_api_token') }}"
 
@@ -28,16 +28,20 @@
           Authorization: "Basic {{ auth_string }}"
           Accept: "application/json"
           X-Atlassian-Token: "no-check"
-        validate_certs: no
+          Cookie: "SERVERID=confluence.lb.gwdg.de_confluence.mpg.de_global-1"
+        validate_certs: yes
         return_content: yes
         status_code: [200, 401, 403]
+        follow_redirects: all
       register: spaces_response
 
     - name: Debug API response on error
       debug:
         msg: 
           - "Status Code: {{ spaces_response.status }}"
+          - "URL used: {{ spaces_response.url }}"
           - "Response Headers: {{ spaces_response }}"
+      failed_when: spaces_response.status == 401
       when: spaces_response.status != 200
 
     - name: Display spaces information
