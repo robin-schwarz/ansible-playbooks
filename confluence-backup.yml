@@ -6,7 +6,7 @@
     confluence_base_url: "{{ lookup('env', 'confluence_base_url') }}"
     confluence_api_token: "{{ lookup('env', 'confluence_api_token') }}"
     confluence_email: "{{ lookup('env', 'confluence_email') }}"
-    space_key: "YOURSPACEKEY"  # Der Space-Key des zu sichernden Spaces
+    space_key: "{{ lookup('env', 'space_key') }}" 
     backup_dir: "/home/admin/semaphore"
     include_attachments: true
     max_retries: 150
