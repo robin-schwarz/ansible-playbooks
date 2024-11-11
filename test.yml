@@ -1,0 +1,53 @@
+---
+- name: List All Confluence Spaces
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    confluence_base_url: "https://confluence.mpg.de"  # Ohne Slash am Ende
+    confluence_email: "{{ lookup('env', 'confluence_email') }}"
+    confluence_api_token: "{{ lookup('env', 'confluence_api_token') }}"
+
+  tasks:
+    - name: Debug connection information
+      debug:
+        msg: 
+          - "Checking connection to: {{ confluence_base_url }}/wiki/rest/api/space"
+          - "Using email: {{ confluence_email }}"
+          - "API token length: {{ confluence_api_token | length }}"
+
+    - name: Create base64 encoded credentials
+      set_fact:
+        auth_string: "{{ (confluence_email ~ ':' ~ confluence_api_token) | b64encode }}"
+
+    - name: Get list of all Confluence spaces
+      uri:
+        url: "{{ confluence_base_url }}/wiki/rest/api/space"
+        method: GET
+        headers:
+          Authorization: "Basic {{ auth_string }}"
+          Accept: "application/json"
+          X-Atlassian-Token: "no-check"
+        validate_certs: no
+        return_content: yes
+        status_code: [200, 401, 403]
+      register: spaces_response
+
+    - name: Debug API response on error
+      debug:
+        msg: 
+          - "Status Code: {{ spaces_response.status }}"
+          - "Response Headers: {{ spaces_response }}"
+      when: spaces_response.status != 200
+
+    - name: Display spaces information
+      debug:
+        msg: |
+          Verfügbare Spaces:
+          {% for space in spaces_response.json.results %}
+          - Space Name: {{ space.name }}
+            Space-Schlüssel: {{ space.key }}
+            Typ: {{ space.type }}
+            Status: {{ space.status }}
+          {% endfor %}
+      when: spaces_response.status == 200
