@@ -12,8 +12,6 @@
     wait_seconds: 20
     timezone: "Europe/Amsterdam"
 
-  vars_files:
-    - vars/confluence_secrets.yml  # secrets
 
   tasks:
     - name: Ensure backup directory exists
