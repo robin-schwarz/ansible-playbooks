@@ -22,7 +22,7 @@
 
     - name: Get list of all Confluence spaces
       uri:
-        url: "{{ confluence_base_url }}/wiki/rest/api/space"
+        url: "{{ confluence_base_url }}rest/api/space"
         method: GET
         headers:
           Authorization: "Basic {{ auth_string }}"
