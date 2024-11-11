@@ -4,7 +4,7 @@
   connection: local
   gather_facts: false
   vars:
-    confluence_base_url: "https://confluence.mpg.de"
+    confluence_base_url: "{{ lookup('env', 'confluence_base_url') }}"
     confluence_api_token: "{{ lookup('env', 'confluence_api_token') }}"
 
   tasks:
@@ -16,7 +16,7 @@
 
     - name: Get list of all Confluence spaces
       uri:
-        url: "{{ confluence_base_url }}/rest/api/space"
+        url: "{{ confluence_base_url }}rest/api/space"
         method: GET
         headers:
           Authorization: "Bearer {{ confluence_api_token }}"
